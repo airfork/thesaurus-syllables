@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"io"
 	"log"
 	"net/http"
@@ -22,16 +23,23 @@ func main() {
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 
-	r.HandleFunc(BasePath, apiHandler).Methods("GET").Queries("search", "")
-	r.HandleFunc(BasePath, apiHandler).Methods("GET").Queries("search", "", "rel", "")
+	r.HandleFunc(BasePath, apiHandler).Methods("GET", "OPTIONS").Queries("search", "")
+	r.HandleFunc(BasePath, apiHandler).Methods("GET", "OPTIONS").Queries("search", "", "rel", "")
 	r.HandleFunc("*", notFoundHandler)
+
+	cor := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		// Enable Debugging for testing, consider disabling in production
+		Debug: true,
+	})
 
 	srv := &http.Server{
 		Addr:         "0.0.0.0:" + PORT,
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      r,
+		Handler:      cor.Handler(r),
 	}
 
 	// Run server in a goroutine so that it doesn't block.
@@ -61,6 +69,7 @@ func main() {
 // Handler func for search endpoint
 // Makes api call to Datamuse, sorts data, and returns response to user
 func apiHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("OPTION", "*")
 	// get search
 	search := r.FormValue("search")
 
