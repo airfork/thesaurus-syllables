@@ -24,7 +24,7 @@ func main() {
 
 	r.HandleFunc(BasePath, apiHandler).Methods("GET").Queries("search", "")
 	r.HandleFunc(BasePath, apiHandler).Methods("GET").Queries("search", "", "rel", "")
-	r.HandleFunc("*", notFound)
+	r.HandleFunc("*", notFoundHandler)
 
 	srv := &http.Server{
 		Addr:         "0.0.0.0:" + PORT,
@@ -58,6 +58,8 @@ func main() {
 	os.Exit(0)
 }
 
+// Handler func for search endpoint
+// Makes api call to Datamuse, sorts data, and returns response to user
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	// get search
 	search := r.FormValue("search")
@@ -140,7 +142,8 @@ func serverError(err error, w http.ResponseWriter) {
 	}
 }
 
-func notFound(w http.ResponseWriter, r *http.Request) {
+// Handler func for catch all route, just return 404
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	_, err := w.Write([]byte("Not found"))
 	if err != nil {
